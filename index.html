@@ -296,8 +296,8 @@ input[type=text]:focus{border-color:var(--accent);}
     <button id="btn-free" class="spbtn spbtn-free" onclick="genLink()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Generate Free Link (24h)
     </button>
-    <div id="sl-res"><input type="text" id="sl-inp" readonly><button class="cpbtn" onclick="cpLink()">Copy</button></div>
-    <p style="font-size:10px;color:var(--text-dim);margin-top:5px;line-height:1.5;">Backend bağlantısı kurulunca aktif olacak.</p>
+    <div id="sl-res" style="display:none;"><input type="text" id="sl-inp" readonly style="background:none;border:none;color:var(--text-sec);font-size:11px;width:100%;outline:none;font-family:inherit;"><button class="cpbtn" onclick="cpLink()">Copy</button></div>
+    <div id="sl-note" style="font-size:10px;color:var(--text-dim);margin-top:4px;"></div>
     <div class="sp-div"></div>
     <div class="sp-sub">Uzun Süreli — Codapay</div>
     <div class="tier-row">
