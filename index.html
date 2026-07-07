@@ -17,8 +17,11 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
 .ps{overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
 .ps::-webkit-scrollbar{width:4px;}
 .ps::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+/* Settings panel — no scrollbar */
+#ps .ps{overflow-y:auto;scrollbar-width:none;}
+#ps .ps::-webkit-scrollbar{display:none;}
 #pu{width:218px;border-right:1px solid var(--border);flex-shrink:0;}
-#ps{width:268px;border-right:1px solid var(--border);flex-shrink:0;}
+#ps{width:310px;border-right:1px solid var(--border);flex-shrink:0;}
 #pp{flex:1;display:flex;flex-direction:column;background:var(--bg);min-width:0;}
 .ph{padding:11px 13px 9px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .ph h2{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);}
@@ -90,12 +93,12 @@ select option{background:var(--panel2);}
 input[type=text]{background:var(--input-bg);border:1.5px solid var(--border2);border-radius:6px;color:var(--text-sec);font-size:12px;font-family:inherit;padding:4px 8px;outline:none;flex:1;width:0;}
 input[type=text]:focus{border-color:var(--accent);}
 /* Themes grid */
-.tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:4px;}
-.ttile{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;transition:all .15s;}
+.tgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-top:4px;}
+.ttile{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 3px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer;transition:all .15s;}
 .ttile:hover{border-color:var(--accent);background:var(--accent-glow);}
 .ttile.active{border-color:var(--accent);background:var(--accent-glow);}
-.tdot{width:14px;height:14px;border-radius:50%;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.4);}
-.tname{font-size:9px;color:var(--text-sec);text-align:center;line-height:1.2;font-weight:500;}
+.tdot{width:11px;height:11px;border-radius:50%;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.4);}
+.tname{font-size:7.5px;color:var(--text-sec);text-align:center;line-height:1.1;font-weight:500;}
 /* Toolbar */
 #ptb{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--panel);}
 #tbl{display:flex;align-items:center;gap:8px;flex:1;}
@@ -214,7 +217,7 @@ input[type=text]:focus{border-color:var(--accent);}
     </div>
 
     <!-- Handle -->
-    <div class="ss open">
+    <div class="ss">
       <div class="ssh" onclick="toggleSec(this)"><span class="sst">Handle</span><span class="ssa">&#9658;</span></div>
       <div class="ssb">
         <div class="ctrl"><span class="cl">Show handle</span><label class="tgl"><input type="checkbox" id="s-showH" checked onchange="update()"><span class="tt"></span><span class="tb"></span></label></div>
@@ -235,7 +238,7 @@ input[type=text]:focus{border-color:var(--accent);}
     </div>
 
     <!-- Labels -->
-    <div class="ss open">
+    <div class="ss">
       <div class="ssh" onclick="toggleSec(this)"><span class="sst">Labels</span><span class="ssa">&#9658;</span></div>
       <div class="ssb">
         <div class="ctrl"><span class="cl">Show labels</span><label class="tgl"><input type="checkbox" id="s-showL" checked onchange="update()"><span class="tt"></span><span class="tb"></span></label></div>
@@ -316,7 +319,9 @@ input[type=text]:focus{border-color:var(--accent);}
 </div>
 <script>
 var MODE=1;
-var DB='revelo-before.jpg', DA='revelo-after.jpg';
+/* 4:3 SVG placeholders — distinct from autofit (1:1) so the toggle is visually obvious */
+var DB="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='3'%3E%3Crect fill='%231a1a1a' width='4' height='3'/%3E%3Ctext x='2' y='1.9' text-anchor='middle' fill='%23333' font-size='.7' font-family='sans-serif'%3EBefore%3C/text%3E%3C/svg%3E";
+var DA="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='3'%3E%3Crect fill='%23222' width='4' height='3'/%3E%3Ctext x='2' y='1.9' text-anchor='middle' fill='%23444' font-size='.7' font-family='sans-serif'%3EAfter%3C/text%3E%3C/svg%3E";
 var imgs={before:DB,after:DA,before1:DB,after1:DA,before2:DB,after2:DA,before3:DB,after3:DA};
 var perLabels={before:'Before',after:'After',before1:'Before',after1:'After',before2:'Day 1',after2:'Day 7',before3:':(',after3:':)'};
 var selTierV='1mo', curTheme='dark', activePreset=-1;
