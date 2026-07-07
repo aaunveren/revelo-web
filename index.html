@@ -293,7 +293,7 @@ input[type=text]:focus{border-color:var(--accent);}
   <div id="spp">
     <div class="sp-title">Share Slider<button class="sp-close" onclick="toggleShare()">&#x2715;</button></div>
     <div class="sp-note">Şu an seçili olan <strong id="sp-theme-name">dark</strong> tema linke gömülür — linki açan herkes aynı temayı görür.<br><br>Resimler <strong>24 saat</strong> sonra otomatik silinir.</div>
-    <button class="spbtn spbtn-free" onclick="genLink()">
+    <button id="btn-free" class="spbtn spbtn-free" onclick="genLink()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Generate Free Link (24h)
     </button>
     <div id="sl-res"><input type="text" id="sl-inp" readonly><button class="cpbtn" onclick="cpLink()">Copy</button></div>
@@ -598,11 +598,122 @@ function drop(e,key){
 function toggleSec(h){h.parentElement.classList.toggle('open');}
 
 /* Share */
-function toggleShare(){g('spp').classList.toggle('open');}
+function toggleShare(){
+  var p=g('spp');p.classList.toggle('open');
+  // Sync theme name
+  var tn=g('sp-theme-name');if(tn)tn.textContent=curTheme;
+}
 function selTier(el,t){selTierV=t;document.querySelectorAll('.tier').forEach(function(x){x.classList.remove('sel');});el.classList.add('sel');}
-function genLink(){g('sl-res').style.display='block';g('sl-inp').value='https://revelo.app/p/xxxxx (backend gerekli)';}
-function cpLink(){var i=g('sl-inp');i.select();document.execCommand('copy');}
-function openCp(){window.open('https://coda.io','_blank');}
+
+/* Compress a src (data URL, blob URL or relative path) to JPEG base64 */
+function compressImg(src,maxW,quality){
+  maxW=maxW||900;quality=quality||0.80;
+  return new Promise(function(resolve){
+    var img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=function(){
+      var scale=img.naturalWidth>maxW?maxW/img.naturalWidth:1;
+      var w=Math.round(img.naturalWidth*scale);
+      var h=Math.round(img.naturalHeight*scale);
+      var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(cv.toDataURL('image/jpeg',quality));
+    };
+    img.onerror=function(){resolve(null);};
+    img.src=src;
+  });
+}
+
+/* Collect all current images as compressed base64 */
+async function collectImages(){
+  var keys=MODE===1?['before','after']:[];
+  if(MODE>1){for(var i=1;i<=MODE;i++){keys.push('before'+i,'after'+i);}}
+  if(imgs.handleLogo)keys.push('handleLogo');
+  if(imgs.overlay)keys.push('overlay');
+  var result={};
+  for(var ki=0;ki<keys.length;ki++){
+    var k=keys[ki];
+    var src=imgs[k];if(!src)continue;
+    var b64=await compressImg(src);
+    if(b64)result[k]=b64;
+  }
+  return result;
+}
+
+/* Collect slider config */
+function collectConfig(){
+  return{
+    start:gv('s-start'),radius:gv('s-radius'),autofit:gc('s-autofit'),
+    orient:gv('s-orient'),showH:gc('s-showH'),hcolor:gv('s-hcolor'),
+    acolor:gv('s-acolor'),hsize:gv('s-hsize'),showSep:gc('s-showSep'),
+    title:gv('s-title'),sub:gv('s-sub'),
+    showL:gc('s-showL'),lpos:gv('s-lpos'),lsize:gv('s-lsize'),
+    lfont:gv('s-lfont'),lcolor:gv('s-lcolor'),showLbg:gc('s-showLbg'),lbg:gv('s-lbg'),
+    oopa:gv('s-oopa'),osize:gv('s-osize'),opos:gv('s-opos'),oinv:gc('s-oinv'),
+    intro:gc('s-intro'),loop:gc('s-loop'),
+    perLabels:perLabels
+  };
+}
+
+/* Create share via API */
+async function createShare(tier){
+  tier=tier||'free';
+  var btn=g('btn-free');
+  var origTxt=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='Görüntüler hazırlanıyor...';}
+  try{
+    if(btn)btn.textContent='Yükleniyor...';
+    var images=await collectImages();
+    var sliderConfig=collectConfig();
+    var resp=await fetch('/api/share',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({images:images,sliderConfig:sliderConfig,mode:MODE,theme:curTheme,tier:tier})
+    });
+    if(!resp.ok){var e=await resp.json();throw new Error(e.error||resp.statusText);}
+    var data=await resp.json();
+    return data;
+  } finally{
+    if(btn){btn.disabled=false;btn.textContent=origTxt;}
+  }
+}
+
+async function genLink(){
+  try{
+    var data=await createShare('free');
+    g('sl-res').style.display='block';
+    g('sl-inp').value=data.url;
+    var expires=new Date(data.expiresAt).toLocaleString('tr-TR');
+    var note=g('sl-note');if(note)note.textContent='⏰ '+expires+' tarihinde sona erer.';
+  }catch(err){
+    alert('Hata: '+err.message);
+  }
+}
+
+async function openCp(){
+  try{
+    // Create a free 24h share first, then redirect to Codapay with share ID
+    var data=await createShare('free');
+    g('sl-res').style.display='block';
+    g('sl-inp').value=data.url;
+    // Open Codapay with share ID + selected tier
+    var baseUrl={
+      '1mo':window.CODAPAY_1MO||'#',
+      '3mo':window.CODAPAY_3MO||'#',
+      '12mo':window.CODAPAY_12MO||'#'
+    }[selTierV]||'#';
+    if(baseUrl==='#'){alert('Codapay URL yapılandırılmamış.');return;}
+    var cpUrl=baseUrl+(baseUrl.includes('?')?'&':'?')+'custom='+encodeURIComponent(data.id)+'&tier='+selTierV;
+    window.open(cpUrl,'_blank');
+  }catch(err){
+    alert('Hata: '+err.message);
+  }
+}
+
+function cpLink(){
+  var i=g('sl-inp');if(!i||!i.value)return;
+  navigator.clipboard?navigator.clipboard.writeText(i.value).catch(function(){i.select();document.execCommand('copy');}):( i.select(),document.execCommand('copy'));
+}
 
 /* Reset */
 function doReset(){
